@@ -1,62 +1,38 @@
-package com.dukeenergy.formula.model.entities;
+private EmployeeStageEntity mapToEmployeeStageEntity(EmployeeViewEntity source) {
+        EmployeeStageEntity destination = new EmployeeStageEntity();
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
+        destination.setEmpIdNum(source.getSourceWorkerId());
+        destination.setFullName(source.getFullName());
+        destination.setFirstName(source.getFirstName());
+        destination.setLastName(source.getLastName());
+        destination.setMiddleName(source.getMiddleName());
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+        // Example hardcoded value for department, adjust as necessary
+        destination.setEmployeeDept("DefaultDept"); 
+        destination.setEmpIdn(source.getSourceNetworkId());
 
-@Entity
-@Table(name = "EMPLOYEEstg")
-@Data
-@NoArgsConstructor
-public class EmployeeStageEntity {
-    @Id
-    @Column(name = "emp_id_num")
-    String empIdNum;
-    @Column(name = "full_user_name")
-    String fullName;
-    @Column(name = "first_name")
-    String firstName;
-    @Column(name = "last_name")
-    String lastName;
-    @Column(name = "middle_initial")
-    String middleName;
-    @Column(name = "employee_dept")
-    String employeeDept;
-    @Column(name = "emp_iden")
-    String empIdn;
-}
+        return destination;
+    }
 
 
+    @Transactional
+    public void bulkTransfer(List<EmployeeViewEntity> sourceEmployees) {
+        int count = 0;
 
+        for (EmployeeViewEntity source : sourceEmployees) {
+            EmployeeStageEntity destination = mapToEmployeeStageEntity(source);
 
-package com.dukeenergy.formula.model.entities;
+            entityManager.persist(destination);
+            count++;
 
-import lombok.Data;
+            // Flush and clear the persistence context every BATCH_SIZE inserts
+            if (count % BATCH_SIZE == 0) {
+                entityManager.flush();
+                entityManager.clear();
+            }
+        }
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
-
-@Data
-@Entity
-@Table(name = "WorkForce.Worker_Info")
-public class EmployeeViewEntity {
-    @Id
-    @Column(name = "Source_Worker_Id")
-    String sourceWorkerId;
-    @Column(name = "Full_Name")
-    String fullName;
-    @Column(name = "First_Name")
-    String firstName;
-    @Column(name = "Last_Name")
-    String lastName;
-    @Column(name = "Middle_Name")
-    String middleName;
-    @Column(name = "Source_Network_Id")
-    String sourceNetworkId;
-}
+        // Flush remaining entities
+        entityManager.flush();
+        entityManager.clear();
+    }
