@@ -1,28 +1,17 @@
-private EmployeeStageEntity mapToEmployeeStageEntity(EmployeeViewEntity source) {
-        EmployeeStageEntity destination = new EmployeeStageEntity();
+@Repository
+public class EmployeeStgRepository {
 
-        destination.setEmpIdNum(source.getSourceWorkerId());
-        destination.setFullName(source.getFullName());
-        destination.setFirstName(source.getFirstName());
-        destination.setLastName(source.getLastName());
-        destination.setMiddleName(source.getMiddleName());
+    @PersistenceContext
+    private EntityManager entityManager;
 
-        // Example hardcoded value for department, adjust as necessary
-        destination.setEmployeeDept("DefaultDept"); 
-        destination.setEmpIdn(source.getSourceNetworkId());
-
-        return destination;
-    }
-
+    private static final int BATCH_SIZE = 50; // Adjust batch size as needed
 
     @Transactional
-    public void bulkTransfer(List<EmployeeViewEntity> sourceEmployees) {
+    public void bulkInsert(List<EmployeeStageEntity> employees) {
         int count = 0;
 
-        for (EmployeeViewEntity source : sourceEmployees) {
-            EmployeeStageEntity destination = mapToEmployeeStageEntity(source);
-
-            entityManager.persist(destination);
+        for (EmployeeStageEntity employee : employees) {
+            entityManager.persist(employee);
             count++;
 
             // Flush and clear the persistence context every BATCH_SIZE inserts
@@ -36,3 +25,4 @@ private EmployeeStageEntity mapToEmployeeStageEntity(EmployeeViewEntity source) 
         entityManager.flush();
         entityManager.clear();
     }
+}
