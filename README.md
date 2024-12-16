@@ -1,28 +1,23 @@
-@Repository
-public class EmployeeStgRepository {
+public void transfer(List<EmployeeViewEntity> sourceEmployees) {
+        // Map source employees to stage entities
+        List<EmployeeStageEntity> stageEntities = sourceEmployees.stream()
+                .map(this::mapToEmployeeStageEntity)
+                .toList();
 
-    @PersistenceContext
-    private EntityManager entityManager;
-
-    private static final int BATCH_SIZE = 50; // Adjust batch size as needed
-
-    @Transactional
-    public void bulkInsert(List<EmployeeStageEntity> employees) {
-        int count = 0;
-
-        for (EmployeeStageEntity employee : employees) {
-            entityManager.persist(employee);
-            count++;
-
-            // Flush and clear the persistence context every BATCH_SIZE inserts
-            if (count % BATCH_SIZE == 0) {
-                entityManager.flush();
-                entityManager.clear();
-            }
-        }
-
-        // Flush remaining entities
-        entityManager.flush();
-        entityManager.clear();
+        // Call repository for bulk insert
+        employeeStgRepository.bulkInsert(stageEntities);
     }
-}
+
+    private EmployeeStageEntity mapToEmployeeStageEntity(EmployeeViewEntity source) {
+        EmployeeStageEntity destination = new EmployeeStageEntity();
+
+        destination.setEmpIdNum(source.getSourceWorkerId());
+        destination.setFullName(source.getFullName());
+        destination.setFirstName(source.getFirstName());
+        destination.setLastName(source.getLastName());
+        destination.setMiddleName(source.getMiddleName());
+        destination.setEmployeeDept("DefaultDept");
+        destination.setEmpIdn(source.getSourceNetworkId());
+
+        return destination;
+    }
